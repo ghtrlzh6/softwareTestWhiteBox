@@ -1,0 +1,2 @@
+resultA.md是成员A的输出结果，是deliversable中各文件的精简结果
+
