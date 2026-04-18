@@ -1,0 +1,7 @@
+node_modules/
+got/
+__pycache__/
+.vitest-cache/
+coverage/
+*.log
+.env

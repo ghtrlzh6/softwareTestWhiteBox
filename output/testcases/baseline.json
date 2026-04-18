@@ -1,0 +1,116 @@
+{
+  "function": "getRequestFunction",
+  "language": "TypeScript",
+  "target_file": "source/core/options.ts",
+  "test_cases": [
+    {
+      "id": "TC01",
+      "input": {
+        "setup": "class Options { constructor(){ this.internals = {}; }; getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; }; _getFallbackRequestFunction(){ return ()=>'fallback'; }; _callFallbackRequest(url, options, callback){ const fallbackRequest = this._getFallbackRequestFunction(); if (!fallbackRequest) { throw new TypeError('The request function must return a value'); } const fallbackResult = fallbackRequest(url, options, callback); if (fallbackResult === undefined) { throw new TypeError('The request function must return a value'); } if (fallbackResult && typeof fallbackResult.then === 'function') { return this._resolveFallbackRequestResult(fallbackResult); } return fallbackResult; }; async _resolveRequestWithFallback(requestResult, url, options, callback){ const result = await requestResult; if (result !== undefined) { return result; } return this._callFallbackRequest(url, options, callback); }; async _resolveFallbackRequestResult(fallbackResult){ const resolvedFallbackResult = await fallbackResult; if (resolvedFallbackResult === undefined) { throw new TypeError('The request function must return a value'); } return resolvedFallbackResult; }; }; const opt = new Options(); const fn = opt.getRequestFunction(); const res = fn('u', {}, undefined); if (res !== 'fallback') { throw new Error('fail'); };",
+        "args": ""
+      },
+      "expected_output": "'fallback'",
+      "expected_exception": "",
+      "covered_statements": [
+        3243,
+        3245,
+        3246,
+        3338,
+        3339
+      ],
+      "covered_branches": [
+        "B1_true"
+      ],
+      "notes": "No customRequest path uses fallback function"
+    },
+    {
+      "id": "TC02",
+      "input": {
+        "setup": "class Options { constructor(){ this.internals = {request:(u,o,c)=>'ok'}; }; getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; }; _getFallbackRequestFunction(){ return ()=> 'fallback'; }; _callFallbackRequest(url, options, callback){ return 'fallback'; }; async _resolveRequestWithFallback(r,u,o,c){ return 'never'; }; }; const opt = new Options(); const fn = opt.getRequestFunction(); const res = fn('u', {}, undefined); if (res !== 'fallback') { throw new Error('fail'); };",
+        "args": ""
+      },
+      "expected_output": "'fallback'",
+      "expected_exception": "",
+      "covered_statements": [
+        3249,
+        3250,
+        3260
+      ],
+      "covered_branches": [
+        "B2_false"
+      ],
+      "notes": "customRequest returns non-promise so fallback call path"
+    },
+    {
+      "id": "TC03",
+      "input": {
+        "setup": "class Options { constructor(){ this.internals = {request:(u,o,c)=>Promise.resolve('ok')}; }; getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; }; async _resolveRequestWithFallback(requestResult, url, options, callback){ const result = await requestResult; if (result !== undefined) { return result; } return 'fallback'; }; }; const opt = new Options(); const fn = opt.getRequestFunction(); const res = await fn('u', {}, undefined); if (res !== 'ok') { throw new Error('fail'); };",
+        "args": ""
+      },
+      "expected_output": "'ok'",
+      "expected_exception": "",
+      "covered_statements": [
+        3252,
+        3253,
+        3390,
+        3392,
+        3393
+      ],
+      "covered_branches": [
+        "B3_true"
+      ],
+      "notes": "Promise resolves with value"
+    },
+    {
+      "id": "TC04",
+      "input": {
+        "setup": "class Options { constructor(){ this.internals = {request:(u,o,c)=>Promise.resolve(undefined)}; }; getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; }; _callFallbackRequest(){ return 'fallback'; }; async _resolveRequestWithFallback(requestResult, url, options, callback){ const result = await requestResult; if (result !== undefined) { return result; } return this._callFallbackRequest(url, options, callback); }; }; const opt = new Options(); const fn = opt.getRequestFunction(); const res = await fn('u', {}, undefined); if (res !== 'fallback') { throw new Error('fail'); };",
+        "args": ""
+      },
+      "expected_output": "'fallback'",
+      "expected_exception": "",
+      "covered_statements": [
+        3396
+      ],
+      "covered_branches": [
+        "B3_false"
+      ],
+      "notes": "Promise resolves undefined triggers fallback"
+    },
+    {
+      "id": "TC05",
+      "input": {
+        "setup": "class Options { constructor(){ this.internals = {request:(u,o,c)=>'x'}; }; getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; }; _getFallbackRequestFunction(){ return undefined; }; _callFallbackRequest(url, options, callback){ const fallbackRequest = this._getFallbackRequestFunction(); if (!fallbackRequest) { throw new TypeError('The request function must return a value'); } return 'x'; }; }; const opt = new Options(); const fn = opt.getRequestFunction(); let err = ''; try { fn('u', {}, undefined); } catch(e){ err = e.message; }; if (err !== 'The request function must return a value') { throw new Error('fail'); };",
+        "args": ""
+      },
+      "expected_output": "undefined",
+      "expected_exception": "TypeError('The request function must return a value')",
+      "covered_statements": [
+        3367,
+        3368
+      ],
+      "covered_branches": [
+        "B4_true"
+      ],
+      "notes": "Fallback function missing triggers exception"
+    },
+    {
+      "id": "TC06",
+      "input": {
+        "setup": "class Options { constructor(){ this.internals = {request:(u,o,c)=>'x'}; }; getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; }; _getFallbackRequestFunction(){ return ()=>undefined; }; _callFallbackRequest(url, options, callback){ const fallbackRequest = this._getFallbackRequestFunction(); const fallbackResult = fallbackRequest(url, options, callback); if (fallbackResult === undefined) { throw new TypeError('The request function must return a value'); } return fallbackResult; }; }; const opt = new Options(); const fn = opt.getRequestFunction(); let err = ''; try { fn('u', {}, undefined); } catch(e){ err = e.message; }; if (err !== 'The request function must return a value') { throw new Error('fail'); };",
+        "args": ""
+      },
+      "expected_output": "undefined",
+      "expected_exception": "TypeError('The request function must return a value')",
+      "covered_statements": [
+        3373,
+        3374
+      ],
+      "covered_branches": [
+        "B5_true"
+      ],
+      "notes": "Fallback returns undefined triggers exception"
+    }
+  ],
+  "unreachable": []
+}

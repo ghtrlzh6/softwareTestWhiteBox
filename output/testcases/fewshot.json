@@ -1,0 +1,97 @@
+{
+  "function": "getRequestFunction",
+  "language": "TypeScript",
+  "target_file": "source/core/options.ts",
+  "test_cases": [
+    {
+      "id": "TC01",
+      "input": {
+        "setup": "const is = { promise: (v:any) => v && typeof v.then === 'function' };\nclass Options {\n  internals:any;\n  constructor(){ this.internals = {}; }\n  getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this.getFallbackRequestFunction(); } const requestWithFallback = (url:any, options:any, callback?:any) => { const result = customRequest(url, options, callback); if (is.promise(result)) { return this.resolveRequestWithFallback(result, url, options, callback); } return this.callFallbackRequest(url, options, callback); }; return requestWithFallback; }\n  getFallbackRequestFunction(){ const url = this.internals.url; if (!url) { return; } return (u:any,o:any,c:any)=>'fallback'; }\n  callFallbackRequest(url:any, options:any, callback?:any){ const fallbackRequest = this.getFallbackRequestFunction(); if (!fallbackRequest) { throw new TypeError('The request function must return a value'); } const fallbackResult = fallbackRequest(url, options, callback); if (fallbackResult === undefined) { throw new TypeError('The request function must return a value'); } if (is.promise(fallbackResult)) { return this.resolveFallbackRequestResult(fallbackResult); } return fallbackResult; }\n  async resolveRequestWithFallback(requestResult:any,url:any,options:any,callback?:any){ const result = await requestResult; if (result !== undefined) { return result; } return this.callFallbackRequest(url, options, callback); }\n  async resolveFallbackRequestResult(fallbackResult:any){ const resolvedFallbackResult = await fallbackResult; if (resolvedFallbackResult === undefined) { throw new TypeError('The request function must return a value'); } return resolvedFallbackResult; }\n}\nconst opt = new Options();\nopt.internals.url = new URL('http://a');\nconst fn = opt.getRequestFunction();\nconst res = fn(new URL('http://a'), {}, undefined);\nexpect(res).toBe('fallback');"
+      },
+      "expected_output": "fallback",
+      "expected_exception": null,
+      "covered_statements": [
+        3243,
+        3245,
+        3246,
+        3336,
+        3338
+      ],
+      "covered_branches": [
+        "B1_true"
+      ],
+      "notes": "Covers path where no customRequest is provided and fallback function is directly returned and executed."
+    },
+    {
+      "id": "TC02",
+      "input": {
+        "setup": "const is = { promise: (v:any) => v && typeof v.then === 'function' };\nclass Options {\n  internals:any;\n  constructor(){ this.internals = {}; }\n  getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this.getFallbackRequestFunction(); } const requestWithFallback = (url:any, options:any, callback?:any) => { const result = customRequest(url, options, callback); if (is.promise(result)) { return this.resolveRequestWithFallback(result, url, options, callback); } return this.callFallbackRequest(url, options, callback); }; return requestWithFallback; }\n  getFallbackRequestFunction(){ return (u:any,o:any,c:any)=>'fb'; }\n  callFallbackRequest(url:any, options:any, callback?:any){ const fallbackRequest = this.getFallbackRequestFunction(); if (!fallbackRequest) { throw new TypeError('The request function must return a value'); } const fallbackResult = fallbackRequest(url, options, callback); if (fallbackResult === undefined) { throw new TypeError('The request function must return a value'); } if (is.promise(fallbackResult)) { return this.resolveFallbackRequestResult(fallbackResult); } return fallbackResult; }\n  async resolveRequestWithFallback(requestResult:any,url:any,options:any,callback?:any){ const result = await requestResult; if (result !== undefined) { return result; } return this.callFallbackRequest(url, options, callback); }\n  async resolveFallbackRequestResult(fallbackResult:any){ const resolvedFallbackResult = await fallbackResult; if (resolvedFallbackResult === undefined) { throw new TypeError('The request function must return a value'); } return resolvedFallbackResult; }\n}\nconst opt = new Options();\nopt.internals.request = ()=> 'direct';\nconst fn = opt.getRequestFunction();\nconst res = fn(new URL('http://a'), {}, undefined);\nexpect(res).toBe('fb');"
+      },
+      "expected_output": "fb",
+      "expected_exception": null,
+      "covered_statements": [
+        3249,
+        3250,
+        3252,
+        3260
+      ],
+      "covered_branches": [
+        "B1_false",
+        "B2_false"
+      ],
+      "notes": "Covers branch where customRequest exists but returns non-promise, forcing fallback call."
+    },
+    {
+      "id": "TC03",
+      "input": {
+        "setup": "const is = { promise: (v:any) => v && typeof v.then === 'function' };\nclass Options {\n  internals:any;\n  constructor(){ this.internals = {}; }\n  getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this.getFallbackRequestFunction(); } const requestWithFallback = (url:any, options:any, callback?:any) => { const result = customRequest(url, options, callback); if (is.promise(result)) { return this.resolveRequestWithFallback(result, url, options, callback); } return this.callFallbackRequest(url, options, callback); }; return requestWithFallback; }\n  getFallbackRequestFunction(){ return (u:any,o:any,c:any)=>'fb'; }\n  callFallbackRequest(url:any, options:any, callback?:any){ const fallbackRequest = this.getFallbackRequestFunction(); if (!fallbackRequest) { throw new TypeError('The request function must return a value'); } const fallbackResult = fallbackRequest(url, options, callback); if (fallbackResult === undefined) { throw new TypeError('The request function must return a value'); } if (is.promise(fallbackResult)) { return this.resolveFallbackRequestResult(fallbackResult); } return fallbackResult; }\n  async resolveRequestWithFallback(requestResult:any,url:any,options:any,callback?:any){ const result = await requestResult; if (result !== undefined) { return result; } return this.callFallbackRequest(url, options, callback); }\n  async resolveFallbackRequestResult(fallbackResult:any){ const resolvedFallbackResult = await fallbackResult; if (resolvedFallbackResult === undefined) { throw new TypeError('The request function must return a value'); } return resolvedFallbackResult; }\n}\nconst opt = new Options();\nopt.internals.request = ()=> Promise.resolve('async-ok');\nconst fn = opt.getRequestFunction();\nconst res = await fn(new URL('http://a'), {}, undefined);\nexpect(res).toBe('async-ok');"
+      },
+      "expected_output": "async-ok",
+      "expected_exception": null,
+      "covered_statements": [
+        3252,
+        3253,
+        3389,
+        3392
+      ],
+      "covered_branches": [
+        "B2_true",
+        "B3_true"
+      ],
+      "notes": "Covers async branch where customRequest returns a Promise resolving to a value."
+    },
+    {
+      "id": "TC04",
+      "input": {
+        "setup": "const is = { promise: (v:any) => v && typeof v.then === 'function' };\nclass Options {\n  internals:any;\n  constructor(){ this.internals = {}; }\n  getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this.getFallbackRequestFunction(); } const requestWithFallback = (url:any, options:any, callback?:any) => { const result = customRequest(url, options, callback); if (is.promise(result)) { return this.resolveRequestWithFallback(result, url, options, callback); } return this.callFallbackRequest(url, options, callback); }; return requestWithFallback; }\n  getFallbackRequestFunction(){ return (u:any,o:any,c:any)=>'fb2'; }\n  callFallbackRequest(url:any, options:any, callback?:any){ const fallbackRequest = this.getFallbackRequestFunction(); if (!fallbackRequest) { throw new TypeError('The request function must return a value'); } const fallbackResult = fallbackRequest(url, options, callback); if (fallbackResult === undefined) { throw new TypeError('The request function must return a value'); } if (is.promise(fallbackResult)) { return this.resolveFallbackRequestResult(fallbackResult); } return fallbackResult; }\n  async resolveRequestWithFallback(requestResult:any,url:any,options:any,callback?:any){ const result = await requestResult; if (result !== undefined) { return result; } return this.callFallbackRequest(url, options, callback); }\n  async resolveFallbackRequestResult(fallbackResult:any){ const resolvedFallbackResult = await fallbackResult; if (resolvedFallbackResult === undefined) { throw new TypeError('The request function must return a value'); } return resolvedFallbackResult; }\n}\nconst opt = new Options();\nopt.internals.request = ()=> Promise.resolve(undefined);\nconst fn = opt.getRequestFunction();\nconst res = await fn(new URL('http://a'), {}, undefined);\nexpect(res).toBe('fb2');"
+      },
+      "expected_output": "fb2",
+      "expected_exception": null,
+      "covered_statements": [
+        3392,
+        3396
+      ],
+      "covered_branches": [
+        "B3_false"
+      ],
+      "notes": "Covers async fallback when Promise resolves to undefined, forcing fallback execution."
+    },
+    {
+      "id": "TC05",
+      "input": {
+        "setup": "const is = { promise: (v:any) => v && typeof v.then === 'function' };\nclass Options {\n  internals:any;\n  constructor(){ this.internals = {}; }\n  getRequestFunction(){ const {request: customRequest} = this.internals; if (!customRequest) { return this.getFallbackRequestFunction(); } const requestWithFallback = (url:any, options:any, callback?:any) => { const result = customRequest(url, options, callback); if (is.promise(result)) { return this.resolveRequestWithFallback(result, url, options, callback); } return this.callFallbackRequest(url, options, callback); }; return requestWithFallback; }\n  getFallbackRequestFunction(){ return undefined; }\n  callFallbackRequest(url:any, options:any, callback?:any){ const fallbackRequest = this.getFallbackRequestFunction(); if (!fallbackRequest) { throw new TypeError('The request function must return a value'); } const fallbackResult = fallbackRequest(url, options, callback); if (fallbackResult === undefined) { throw new TypeError('The request function must return a value'); } if (is.promise(fallbackResult)) { return this.resolveFallbackRequestResult(fallbackResult); } return fallbackResult; }\n  async resolveRequestWithFallback(requestResult:any,url:any,options:any,callback?:any){ const result = await requestResult; if (result !== undefined) { return result; } return this.callFallbackRequest(url, options, callback); }\n  async resolveFallbackRequestResult(fallbackResult:any){ const resolvedFallbackResult = await fallbackResult; if (resolvedFallbackResult === undefined) { throw new TypeError('The request function must return a value'); } return resolvedFallbackResult; }\n}\nconst opt = new Options();\nopt.internals.request = ()=> 'x';\nconst fn = opt.getRequestFunction();\nexpect(()=>fn(new URL('http://a'), {}, undefined)).toThrow('The request function must return a value');"
+      },
+      "expected_output": null,
+      "expected_exception": "TypeError: The request function must return a value",
+      "covered_statements": [
+        3367,
+        3368
+      ],
+      "covered_branches": [
+        "B4_true"
+      ],
+      "notes": "Covers error branch where fallbackRequest is missing, triggering exception."
+    }
+  ],
+  "unreachable": []
+}

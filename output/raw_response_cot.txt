@@ -1,0 +1,68 @@
+{
+  "function": "getRequestFunction",
+  "language": "TypeScript",
+  "target_file": "source/core/options.ts",
+  "test_cases": [
+    {
+      "id": "TC01",
+      "input": {
+        "setup": "class Options { constructor() { this.internals = {}; } getRequestFunction() { const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; } _getFallbackRequestFunction() { return () => 'fallback'; } } const instance = new Options(); const fn = instance.getRequestFunction(); const result = fn(); if (result !== 'fallback') { throw new Error('Expected fallback result'); };",
+        "args": "{}"
+      },
+      "expected_output": "'fallback'",
+      "expected_exception": "",
+      "covered_statements": [3243, 3245, 3246],
+      "covered_branches": ["B1_true"],
+      "notes": "Covers path where no custom request is provided and fallback is used."
+    },
+    {
+      "id": "TC02",
+      "input": {
+        "setup": "class Options { constructor() { this.internals = { request: () => 'not-promise' }; } getRequestFunction() { const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; } _callFallbackRequest() { return 'fallback-called'; } } const instance = new Options(); const fn = instance.getRequestFunction(); const result = fn(); if (result !== 'fallback-called') { throw new Error('Expected fallback call'); };",
+        "args": "{}"
+      },
+      "expected_output": "'fallback-called'",
+      "expected_exception": "",
+      "covered_statements": [3249, 3250, 3252, 3260],
+      "covered_branches": ["B2_false"],
+      "notes": "Custom request returns non-promise, triggering fallback call."
+    },
+    {
+      "id": "TC03",
+      "input": {
+        "setup": "class Options { constructor() { this.internals = { request: () => Promise.resolve('ok') }; } getRequestFunction() { const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; } async _resolveRequestWithFallback(promise) { const result = await promise; if (result !== undefined) { return result; } return 'fallback'; } } const instance = new Options(); const fn = instance.getRequestFunction(); const result = await fn(); if (result !== 'ok') { throw new Error('Expected resolved value'); };",
+        "args": "{}"
+      },
+      "expected_output": "'ok'",
+      "expected_exception": "",
+      "covered_statements": [3252, 3253, 3390, 3392],
+      "covered_branches": ["B3_true"],
+      "notes": "Custom request returns promise resolving to valid result."
+    },
+    {
+      "id": "TC04",
+      "input": {
+        "setup": "class Options { constructor() { this.internals = { request: () => Promise.resolve(undefined) }; } getRequestFunction() { const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; } async _resolveRequestWithFallback(promise) { const result = await promise; if (result !== undefined) { return result; } return this._callFallbackRequest(); } _callFallbackRequest() { return 'fallback-after-undefined'; } } const instance = new Options(); const fn = instance.getRequestFunction(); const result = await fn(); if (result !== 'fallback-after-undefined') { throw new Error('Expected fallback after undefined'); };",
+        "args": "{}"
+      },
+      "expected_output": "'fallback-after-undefined'",
+      "expected_exception": "",
+      "covered_statements": [3392, 3396],
+      "covered_branches": ["B3_false"],
+      "notes": "Promise resolves undefined, forcing fallback execution."
+    },
+    {
+      "id": "TC05",
+      "input": {
+        "setup": "class Options { constructor() { this.internals = { request: () => 'value' }; } getRequestFunction() { const {request: customRequest} = this.internals; if (!customRequest) { return this._getFallbackRequestFunction(); } const requestWithFallback = (url, options, callback) => { const result = customRequest(url, options, callback); if (result && typeof result.then === 'function') { return this._resolveRequestWithFallback(result, url, options, callback); } return this._callFallbackRequest(url, options, callback); }; return requestWithFallback; } _callFallbackRequest() { throw new TypeError('The request function must return a value'); } } const instance = new Options(); const fn = instance.getRequestFunction(); let errorCaught = false; try { fn(); } catch (e) { if (e instanceof TypeError) { errorCaught = true; } } if (!errorCaught) { throw new Error('Expected TypeError'); };",
+        "args": "{}"
+      },
+      "expected_output": "undefined",
+      "expected_exception": "TypeError",
+      "covered_statements": [3367, 3368],
+      "covered_branches": ["B4_true"],
+      "notes": "Ensures error is thrown when fallback request is invalid."
+    }
+  ],
+  "unreachable": []
+}

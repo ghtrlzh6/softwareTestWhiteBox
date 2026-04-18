@@ -1,0 +1,31 @@
+{
+  "status": "success",
+  "description": "Validation and coverage report of LLM-generated test cases",
+  "models_used": "openai/gpt-5.3-codex",
+  "reports": {
+    "baseline": {
+      "valid_json": true,
+      "test_cases_count": 6,
+      "covered_statements_count": 18,
+      "total_source_statements": 88,
+      "statement_coverage": "20.45%",
+      "notes": "Extracted coverage from LLM estimation"
+    },
+    "fewshot": {
+      "valid_json": true,
+      "test_cases_count": 5,
+      "covered_statements_count": 15,
+      "total_source_statements": 88,
+      "statement_coverage": "17.05%",
+      "notes": "Extracted coverage from LLM estimation"
+    },
+    "cot": {
+      "valid_json": true,
+      "test_cases_count": 5,
+      "covered_statements_count": 13,
+      "total_source_statements": 88,
+      "statement_coverage": "14.77%",
+      "notes": "Extracted coverage from LLM estimation"
+    }
+  }
+}
