@@ -296,7 +296,8 @@ Output schema:
   - Line: `100%`
   - Function: `100%`
   - Branch: `93.54%`
-![img.png](img.png)![img_1.png](img_1.png)
+![img.png](img.png)
+![img_1.png](img_1.png)
 #### 对结果的解释
 1. Statement/Line/Function 已达到完整覆盖，说明核心调度链上的正常、异常、异步、fallback 路径都已被真实执行。
 2. Branch 未到 100%，主要来自默认 Node 版本解析表达式中的底层二元分支，这不是本次作业关注的主要业务控制流。
